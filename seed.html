@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ใส่ข้อมูลตัวอย่าง (seed) · LeaveEasy</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/data.js" defer></script>
+  <script type="module" src="js/seed.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>ใส่ข้อมูลตัวอย่างลง Firestore</h1>
+    <p class="subtitle">หน้านี้เป็นเครื่องมือช่วยตั้งค่าครั้งเดียว ไม่ใช่หน้าจอหลักของระบบ</p>
+
+    <div class="card">
+      <p>กดปุ่มด้านล่างเพื่อคัดลอกข้อมูลตัวอย่างจาก <code>js/data.js</code> ไปเก็บไว้ใน Firestore
+        (โฟลเดอร์ <code>users</code>, <code>leaveTypes</code>, <code>leaveRequests</code> และ <code>approvals</code>)</p>
+      <p class="hint">กดซ้ำได้ไม่เป็นไร — ข้อมูลจะถูกเขียนทับด้วยค่าเดิมทุกครั้ง (ใช้ id เดิม ไม่สร้างซ้ำ)</p>
+      <button id="ปุ่มเริ่ม">เริ่มใส่ข้อมูลตัวอย่าง</button>
+    </div>
+
+    <div id="บันทึก" class="card"></div>
+  </div>
+</body>
+</html>
