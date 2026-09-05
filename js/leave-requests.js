@@ -22,11 +22,6 @@ async function โหลดข้อมูล() {
     return;
   }
 
-  // ใบที่เพิ่งยื่นในหน้าถัดไป
-  // (สัปดาห์นี้ยังไม่บันทึกใบใหม่ลง Firestore จริง ใบที่ยื่นใหม่จึงหายเมื่อปิดเบราว์เซอร์)
-  var ใบลาที่ยื่นใหม่ = JSON.parse(sessionStorage.getItem("ใบลาที่ยื่นใหม่") || "[]");
-  ใบลาทั้งหมด = ใบลาทั้งหมด.concat(ใบลาที่ยื่นใหม่);
-
   // ถ้ามีสถานะติดมาท้าย URL ให้กรองเฉพาะสถานะนั้น
   var สถานะที่กรอง = ค่าจากURL("status");
   if (สถานะที่กรอง) {
@@ -70,7 +65,7 @@ function แสดงตาราง(รายการ) {
   // กดที่แถวไหน ไปหน้ารายละเอียดของใบนั้น
   กล่อง.querySelectorAll("tr.clickable").forEach(function (แถว) {
     แถว.addEventListener("click", function () {
-      location.href = "leave-request-detail.html?id=" + แถว.dataset.id;
+      location.href = "leave-request-detail?id=" + แถว.dataset.id;
     });
   });
 }

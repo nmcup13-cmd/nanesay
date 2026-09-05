@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read: if true;
+    }
+    match /leaveRequests/{id} {
+      allow create: if request.resource.data.status == 'รอพิจารณา'
+        && request.resource.data.approverId == ''
+        && request.resource.data.keys().hasAll(
+          ['title','reason','status','requesterId','requesterName',
+           'approverId','approverName','leaveTypeId','leaveTypeName',
+           'startDate','endDate','createdAt']);
+
+      allow update: if resource.data.status == 'รอพิจารณา'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['อนุมัติ', 'ไม่อนุมัติ'];
+
+      allow delete: if resource.data.status == 'รอพิจารณา';
+    }
+  }
+}

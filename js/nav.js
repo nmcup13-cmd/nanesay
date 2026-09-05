@@ -7,14 +7,14 @@
 
 (function () {
   var เมนู = [
-    { href: "index.html",             ชื่อ: "หน้าแรก" },
-    { href: "leave-requests.html",    ชื่อ: "รายการใบลา" },
-    { href: "new-leave-request.html", ชื่อ: "ยื่นใบลาใหม่" },
-    { href: "leave-types.html",       ชื่อ: "ประเภทการลา" }
+    { href: "index",             ชื่อ: "หน้าแรก" },
+    { href: "leave-requests",    ชื่อ: "รายการใบลา" },
+    { href: "new-leave-request", ชื่อ: "ยื่นใบลาใหม่" },
+    { href: "leave-types",       ชื่อ: "ประเภทการลา" }
   ];
 
-  // ชื่อไฟล์ของหน้าที่กำลังเปิดอยู่ เอาไว้ขีดเส้นใต้เมนูที่ตรงกัน
-  var หน้าปัจจุบัน = location.pathname.split("/").pop() || "index.html";
+  // ชื่อไฟล์ของหน้าที่กำลังเปิดอยู่ (ไม่มีนามสกุล .html เพราะใช้ clean URL) เอาไว้ขีดเส้นใต้เมนูที่ตรงกัน
+  var หน้าปัจจุบัน = location.pathname.split("/").pop().replace(/\.html$/, "") || "index";
 
   var html = '<div class="navbar"><span class="brand">🔧 LeaveEasy</span>';
   เมนู.forEach(function (m) {
