@@ -6,7 +6,7 @@
   <title>รายการใบลา · LeaveEasy</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="js/util.js" defer></script>
-  <script src="js/nav.js" defer></script>
+  <script type="module" src="js/nav.js"></script>
   <script type="module" src="js/leave-requests.js"></script>
 </head>
 <body>
@@ -17,7 +17,7 @@
     <p class="subtitle">ใบขอลาทั้งหมดในระบบ กดที่แถวเพื่อดูรายละเอียด</p>
 
     <div class="btn-row">
-      <a class="btn" href="new-leave-request">+ ยื่นใบลาใหม่</a>
+      <a class="btn" href="new-leave-request" id="ปุ่มยื่นใบลาใหม่">+ ยื่นใบลาใหม่</a>
     </div>
 
     <div id="ผลลัพธ์" class="card" style="margin-top:16px">

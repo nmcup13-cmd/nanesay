@@ -12,12 +12,14 @@ import {
   collection,
   getDocs,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+import { ผู้ใช้ปัจจุบัน } from "./current-user.js";
 
 var รหัสใบลา = ค่าจากURL("id");
 var กล่องใบลา = document.getElementById("กล่องใบลา");
 var กล่องความเห็น = document.getElementById("กล่องความเห็น");
 var ใบ = null;
 var ความเห็น = [];
+var ผู้ใช้ = null; // { uid, role } ของคนที่ล็อกอินอยู่ ใช้กำหนดว่าโชว์ปุ่มไหนบ้าง (ตาม ACL.md)
 
 โหลดข้อมูล();
 
@@ -41,6 +43,7 @@ async function โหลดข้อมูล() {
   }
 
   ใบ = Object.assign({ id: สแนปช็อต.id }, สแนปช็อต.data());
+  ผู้ใช้ = await ผู้ใช้ปัจจุบัน();
 
   var ความเห็นสแนปช็อต = await getDocs(collection(db, "leaveRequests", รหัสใบลา, "approvals"));
   ความเห็น = ความเห็นสแนปช็อต.docs.map(function (เอกสาร) {
@@ -71,26 +74,35 @@ function วาดใบลา() {
     return '<div class="field-row"><span class="k">' + r[0] + "</span><span>" + r[1] + "</span></div>";
   }).join("");
 
-  // ปุ่มอนุมัติ / ไม่อนุมัติ ขึ้นเฉพาะใบที่ยังรอพิจารณา
-  if (ใบ.status === "รอพิจารณา") {
-    html +=
-      '<div id="เตือนสถานะ" class="alert alert-error hidden"></div>' +
-      '<div class="btn-row">' +
-      '<button type="button" class="btn-ok" id="ปุ่มอนุมัติ">อนุมัติ</button>' +
-      '<button type="button" class="btn-danger" id="ปุ่มไม่อนุมัติ">ไม่อนุมัติ</button>' +
-      "</div>" +
-      '<div class="btn-row">' +
-      '<button type="button" class="btn-danger" id="ปุ่มลบ">ลบใบลา</button>' +
-      "</div>";
-  } else {
+  // ปุ่มอนุมัติ/ไม่อนุมัติ: เฉพาะ manager/hr และห้ามอนุมัติใบของตัวเอง (ตาม ACL.md)
+  // ปุ่มลบ: เฉพาะเจ้าของใบ ไม่ว่า role ใด — ทั้งคู่แสดงเฉพาะใบที่ยังรอพิจารณา
+  var เป็นเจ้าของ = !!(ผู้ใช้ && ใบ.requesterId === ผู้ใช้.uid);
+  var อนุมัติได้ = !!(ผู้ใช้ && (ผู้ใช้.role === "manager" || ผู้ใช้.role === "hr") && !เป็นเจ้าของ);
+  var ลบได้ = เป็นเจ้าของ;
+
+  if (ใบ.status === "รอพิจารณา" && (อนุมัติได้ || ลบได้)) {
+    html += '<div id="เตือนสถานะ" class="alert alert-error hidden"></div>';
+    if (อนุมัติได้) {
+      html +=
+        '<div class="btn-row">' +
+        '<button type="button" class="btn-ok" id="ปุ่มอนุมัติ">อนุมัติ</button>' +
+        '<button type="button" class="btn-danger" id="ปุ่มไม่อนุมัติ">ไม่อนุมัติ</button>' +
+        "</div>";
+    }
+    if (ลบได้) {
+      html += '<div class="btn-row"><button type="button" class="btn-danger" id="ปุ่มลบ">ลบใบลา</button></div>';
+    }
+  } else if (ใบ.status !== "รอพิจารณา") {
     html += '<p class="hint">ใบนี้พิจารณาแล้ว จึงเปลี่ยนสถานะต่อไม่ได้</p>';
   }
 
   กล่องใบลา.innerHTML = html;
 
-  if (ใบ.status === "รอพิจารณา") {
+  if (อนุมัติได้ && ใบ.status === "รอพิจารณา") {
     document.getElementById("ปุ่มอนุมัติ").addEventListener("click", function () { เปลี่ยนสถานะ("อนุมัติ"); });
     document.getElementById("ปุ่มไม่อนุมัติ").addEventListener("click", function () { เปลี่ยนสถานะ("ไม่อนุมัติ"); });
+  }
+  if (ลบได้ && ใบ.status === "รอพิจารณา") {
     document.getElementById("ปุ่มลบ").addEventListener("click", ลบใบลา);
   }
 }

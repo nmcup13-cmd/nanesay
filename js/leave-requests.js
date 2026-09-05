@@ -5,10 +5,20 @@
 
 import { db } from "./firebase-config.js";
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+import { ผู้ใช้ปัจจุบัน } from "./current-user.js";
 
 const กล่อง = document.getElementById("ผลลัพธ์");
 
 โหลดข้อมูล();
+ซ่อนปุ่มยื่นใบลาถ้าไม่ใช่พนักงาน();
+
+async function ซ่อนปุ่มยื่นใบลาถ้าไม่ใช่พนักงาน() {
+  var โปรไฟล์ = await ผู้ใช้ปัจจุบัน();
+  var ปุ่ม = document.getElementById("ปุ่มยื่นใบลาใหม่");
+  if (ปุ่ม && (!โปรไฟล์ || โปรไฟล์.role !== "employee")) {
+    ปุ่ม.remove();
+  }
+}
 
 async function โหลดข้อมูล() {
   var ใบลาทั้งหมด;

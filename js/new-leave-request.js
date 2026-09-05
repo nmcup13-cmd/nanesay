@@ -4,7 +4,7 @@
 // ประเภทการลาในรายการเลื่อนลงก็อ่านจาก Firestore จริง (โฟลเดอร์ leaveTypes)
 // ─────────────────────────────────────────────────────────────
 
-import { db } from "./firebase-config.js";
+import { db, auth } from "./firebase-config.js";
 import {
   collection,
   getDocs,
@@ -66,12 +66,13 @@ async function โหลดประเภทการลา() {
 
   var ประเภท = ประเภททั้งหมด.find(function (t) { return t.id === ค่า.leaveTypeId; });
 
-  // สัปดาห์ที่ 6 ยังไม่มีล็อกอิน จึงสมมติว่าผู้ขอลาคือ สมชาย ใจดี
+  // สัปดาห์ที่ 7: ผู้ขอลาคือคนที่ล็อกอินอยู่จริง (nav.js การันตีแล้วว่าเข้าหน้านี้ได้ต้องล็อกอินอยู่)
   var ใบใหม่ = {
     title: ค่า.title,
     reason: ค่า.reason,
     status: "รอพิจารณา", // ใบใหม่เริ่มที่ รอพิจารณา เสมอ
-    requesterId: "u001", requesterName: "สมชาย ใจดี",
+    requesterId: auth.currentUser.uid,
+    requesterName: auth.currentUser.displayName || auth.currentUser.email,
     approverId: "", approverName: "",
     leaveTypeId: ประเภท.id, leaveTypeName: ประเภท.name,
     startDate: ค่า.startDate,
