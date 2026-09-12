@@ -11,8 +11,10 @@ import {
   deleteDoc,
   collection,
   getDocs,
+  addDoc,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 import { ผู้ใช้ปัจจุบัน } from "./current-user.js";
+import { สรุปใบลาด้วยAI } from "./ai-summary.js";
 
 var รหัสใบลา = ค่าจากURL("id");
 var กล่องใบลา = document.getElementById("กล่องใบลา");
@@ -80,6 +82,21 @@ function วาดใบลา() {
   var อนุมัติได้ = !!(ผู้ใช้ && (ผู้ใช้.role === "manager" || ผู้ใช้.role === "hr") && !เป็นเจ้าของ);
   var ลบได้ = เป็นเจ้าของ;
 
+  // ปุ่มให้ AI ช่วยสรุปใบลา — เฉพาะคนที่กำลังจะพิจารณาใบนี้ (US-09/สัปดาห์ที่ 8)
+  if (อนุมัติได้ && ใบ.status === "รอพิจารณา") {
+    html +=
+      '<div class="card" id="กล่องสรุปAI">' +
+      "<h2>สรุปโดย AI</h2>" +
+      (ใบ.aiSuggestion
+        ? '<p class="badge badge-ai">ข้อเสนอจาก AI — โปรดตรวจสอบก่อนยืนยัน</p><p>' + esc(ใบ.aiSuggestion) + "</p>"
+        : "<p>ยังไม่มีสรุปจาก AI สำหรับใบนี้</p>") +
+      '<div id="เตือนสรุปAI" class="alert alert-error hidden"></div>' +
+      '<div class="btn-row"><button type="button" id="ปุ่มสรุปAI">' +
+      (ใบ.aiSuggestion ? "สรุปใหม่อีกครั้ง" : "ให้ AI ช่วยสรุปใบลา") +
+      "</button></div>" +
+      "</div>";
+  }
+
   if (ใบ.status === "รอพิจารณา" && (อนุมัติได้ || ลบได้)) {
     html += '<div id="เตือนสถานะ" class="alert alert-error hidden"></div>';
     if (อนุมัติได้) {
@@ -99,12 +116,52 @@ function วาดใบลา() {
   กล่องใบลา.innerHTML = html;
 
   if (อนุมัติได้ && ใบ.status === "รอพิจารณา") {
+    document.getElementById("ปุ่มสรุปAI").addEventListener("click", สรุปด้วยAI);
     document.getElementById("ปุ่มอนุมัติ").addEventListener("click", function () { เปลี่ยนสถานะ("อนุมัติ"); });
     document.getElementById("ปุ่มไม่อนุมัติ").addEventListener("click", function () { เปลี่ยนสถานะ("ไม่อนุมัติ"); });
   }
   if (ลบได้ && ใบ.status === "รอพิจารณา") {
     document.getElementById("ปุ่มลบ").addEventListener("click", ลบใบลา);
   }
+}
+
+// ── ขั้น 1-3: อ่านใบลานี้ → ให้ AI เขียนสรุปสั้น ๆ → เขียนผลกลับลง Firestore ──
+// สถานะ (status) ห้ามถูกแตะจากฟังก์ชันนี้เด็ดขาด — เปลี่ยนได้เฉพาะตอนกดอนุมัติ/ไม่อนุมัติเท่านั้น
+async function สรุปด้วยAI() {
+  var ปุ่ม = document.getElementById("ปุ่มสรุปAI");
+  var เตือน = document.getElementById("เตือนสรุปAI");
+  เตือน.classList.add("hidden");
+  ปุ่ม.disabled = true;
+  ปุ่ม.textContent = "กำลังสรุป…";
+
+  var ผล = await สรุปใบลาด้วยAI(ใบ); // ← ขั้น 1 (อ่านใบลานี้) + ขั้น 2 (เขียนสรุปสั้น ๆ) อยู่ในนี้
+
+  if (!ผล.สำเร็จ) {
+    เตือน.textContent = "⚠️ " + ผล.เหตุผล + " — ยังกดอนุมัติ/ไม่อนุมัติได้ตามปกติ";
+    เตือน.classList.remove("hidden");
+    ปุ่ม.disabled = false;
+    ปุ่ม.textContent = ใบ.aiSuggestion ? "สรุปใหม่อีกครั้ง" : "ให้ AI ช่วยสรุปใบลา";
+    return;
+  }
+
+  // ขั้น 3: เขียนสรุปกลับลงฐาน — ช่อง aiSuggestion ของใบลา + โฟลเดอร์ย่อย aiLog (บันทึกทุกครั้งที่เรียก)
+  try {
+    await updateDoc(doc(db, "leaveRequests", รหัสใบลา), { aiSuggestion: ผล.ข้อความ });
+    await addDoc(collection(db, "leaveRequests", รหัสใบลา, "aiLog"), {
+      input: ผล.input,
+      output: ผล.ข้อความ,
+      createdAt: เวลาตอนนี้(),
+    });
+  } catch (err) {
+    เตือน.textContent = "⚠️ สรุปสำเร็จ แต่บันทึกลงฐานข้อมูลไม่สำเร็จ: " + err.message + " — ยังกดอนุมัติ/ไม่อนุมัติได้ตามปกติ";
+    เตือน.classList.remove("hidden");
+    ปุ่ม.disabled = false;
+    ปุ่ม.textContent = "ลองสรุปใหม่อีกครั้ง";
+    return;
+  }
+
+  ใบ.aiSuggestion = ผล.ข้อความ;
+  วาดใบลา();
 }
 
 // ── เปลี่ยนสถานะจริงใน Firestore (แก้เฉพาะช่อง status) ──

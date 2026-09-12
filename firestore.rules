@@ -21,10 +21,20 @@ service cloud.firestore {
 
       allow update: if request.auth != null
         && resource.data.status == 'รอพิจารณา'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-        && request.resource.data.status in ['อนุมัติ', 'ไม่อนุมัติ'];
+        && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+            && request.resource.data.status in ['อนุมัติ', 'ไม่อนุมัติ'])
+          ||
+          // สัปดาห์ที่ 8 — เขียนผลสรุปจาก AI เท่านั้น ห้ามแตะช่องอื่นรวมถึง status
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['aiSuggestion'])
+        );
 
       allow delete: if request.auth != null && resource.data.status == 'รอพิจารณา';
+
+      // สัปดาห์ที่ 8 — บันทึกทุกครั้งที่เรียก AI สรุปใบลา (append-only ไม่มี update/delete)
+      match /aiLog/{logId} {
+        allow create: if request.auth != null;
+      }
     }
   }
 }

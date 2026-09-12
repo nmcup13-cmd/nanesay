@@ -69,6 +69,7 @@ tbody tr.clickable:hover { background: #eaf3fa; cursor: pointer; }
 .badge-รอพิจารณา { background: #fff3cd; color: #7a5b00; border: 1px solid #ffe08a; }
 .badge-อนุมัติ   { background: #d8f3dc; color: #1b5e34; border: 1px solid #a8dfb8; }
 .badge-ไม่อนุมัติ { background: #fde2e1; color: #8b1f1a; border: 1px solid #f6b8b5; }
+.badge-ai { background: #e7e3fb; color: #4b3d99; border: 1px solid #c9bff2; }
 
 /* ── ปุ่ม ── */
 button, .btn {
